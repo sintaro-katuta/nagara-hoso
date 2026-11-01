@@ -1,0 +1,357 @@
+{
+  "tools": [
+    {
+      "name": "convert-figma-to-code",
+      "description": "Fetches a Figma node and its rendered image from the Figma API and converts it to a code block. Requires FIGMA_ACCESS_TOKEN environment variable to be set.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "figmaNodeUrl": {
+            "type": "string",
+            "description": "The URL of the Figma node (e.g., https://www.figma.com/design/fileKey/fileName?node-id=123-456)"
+          }
+        },
+        "required": [
+          "figmaNodeUrl"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      }
+    },
+    {
+      "name": "generate-theme",
+      "description": "Generates a custom Flowbite theme CSS file based on a brand color (hex format) and user instructions. The AI will intelligently analyze the instructions and customize ALL theme variables (border radius, spacing, colors, typography, etc.) to match the desired aesthetic. This tool creates color shades and variations, adapting the entire theme system to match your brand identity.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "brandColor": {
+            "type": "string",
+            "description": "The primary brand color in hex format (e.g., #3B82F6, #FF5733). This will be used as the base for generating all brand color variations."
+          },
+          "instructions": {
+            "type": "string",
+            "description": "Natural language instructions describing the desired theme aesthetic and customizations. The AI will interpret these instructions to modify all relevant theme variables. Examples: \"Make it modern and minimalist with soft rounded corners\", \"Create a luxury feel with gold accents and elegant spacing\", \"Design for a playful children's app with bright colors\", \"Professional corporate style with subtle borders\", etc."
+          },
+          "fileName": {
+            "type": "string",
+            "description": "Optional filename for the generated theme (e.g., \"my-brand-theme.css\"). Defaults to \"custom-theme.css\""
+          }
+        },
+        "required": [
+          "brandColor",
+          "instructions"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      }
+    }
+  ],
+  "resources": [
+    {
+      "name": "flowbite_overview",
+      "title": "Flowbite Overview",
+      "uri": "flowbite://overview/file",
+      "description": "Overview of the Flowbite MCP server and its capabilities.",
+      "mimeType": "text/markdown"
+    },
+    {
+      "name": "flowbite_theme",
+      "title": "Flowbite Theme",
+      "uri": "flowbite://theme/file",
+      "description": "The theme file that sets the Tailwind CSS variables to make UI look unique for every website.",
+      "mimeType": "text/markdown"
+    },
+    {
+      "name": "flowbite_quickstart",
+      "title": "Flowbite Quickstart",
+      "uri": "flowbite://quickstart/file",
+      "description": "The quickstart file that sets the Tailwind CSS variables to make UI look unique for every website.",
+      "mimeType": "text/markdown"
+    },
+    {
+      "name": "flowbite_components",
+      "title": "Flowbite Components",
+      "uri": "flowbite://components/all",
+      "description": "A list of all Flowbite UI components with links to documentation",
+      "mimeType": "text/markdown"
+    },
+    {
+      "name": "flowbite_accordion",
+      "uri": "flowbite://components/accordion"
+    },
+    {
+      "name": "flowbite_alert",
+      "uri": "flowbite://components/alert"
+    },
+    {
+      "name": "flowbite_avatar",
+      "uri": "flowbite://components/avatar"
+    },
+    {
+      "name": "flowbite_badge",
+      "uri": "flowbite://components/badge"
+    },
+    {
+      "name": "flowbite_banner",
+      "uri": "flowbite://components/banner"
+    },
+    {
+      "name": "flowbite_bottom_navigation",
+      "uri": "flowbite://components/bottom-navigation"
+    },
+    {
+      "name": "flowbite_breadcrumb",
+      "uri": "flowbite://components/breadcrumb"
+    },
+    {
+      "name": "flowbite_buttons",
+      "uri": "flowbite://components/buttons"
+    },
+    {
+      "name": "flowbite_button_group",
+      "uri": "flowbite://components/button-group"
+    },
+    {
+      "name": "flowbite_cards",
+      "uri": "flowbite://components/cards"
+    },
+    {
+      "name": "flowbite_carousel",
+      "uri": "flowbite://components/carousel"
+    },
+    {
+      "name": "flowbite_chat_bubble",
+      "uri": "flowbite://components/chat-bubble"
+    },
+    {
+      "name": "flowbite_clipboard",
+      "uri": "flowbite://components/clipboard"
+    },
+    {
+      "name": "flowbite_datepicker",
+      "uri": "flowbite://components/datepicker"
+    },
+    {
+      "name": "flowbite_device_mockups",
+      "uri": "flowbite://components/device-mockups"
+    },
+    {
+      "name": "flowbite_drawer",
+      "uri": "flowbite://components/drawer"
+    },
+    {
+      "name": "flowbite_dropdowns",
+      "uri": "flowbite://components/dropdowns"
+    },
+    {
+      "name": "flowbite_footer",
+      "uri": "flowbite://components/footer"
+    },
+    {
+      "name": "flowbite_forms",
+      "uri": "flowbite://components/forms"
+    },
+    {
+      "name": "flowbite_gallery",
+      "uri": "flowbite://components/gallery"
+    },
+    {
+      "name": "flowbite_indicators",
+      "uri": "flowbite://components/indicators"
+    },
+    {
+      "name": "flowbite_jumbotron",
+      "uri": "flowbite://components/jumbotron"
+    },
+    {
+      "name": "flowbite_kbd",
+      "uri": "flowbite://components/kbd"
+    },
+    {
+      "name": "flowbite_list_group",
+      "uri": "flowbite://components/list-group"
+    },
+    {
+      "name": "flowbite_mega_menu",
+      "uri": "flowbite://components/mega-menu"
+    },
+    {
+      "name": "flowbite_modal",
+      "uri": "flowbite://components/modal"
+    },
+    {
+      "name": "flowbite_navbar",
+      "uri": "flowbite://components/navbar"
+    },
+    {
+      "name": "flowbite_pagination",
+      "uri": "flowbite://components/pagination"
+    },
+    {
+      "name": "flowbite_popover",
+      "uri": "flowbite://components/popover"
+    },
+    {
+      "name": "flowbite_progress",
+      "uri": "flowbite://components/progress"
+    },
+    {
+      "name": "flowbite_qr_code",
+      "uri": "flowbite://components/qr-code"
+    },
+    {
+      "name": "flowbite_rating",
+      "uri": "flowbite://components/rating"
+    },
+    {
+      "name": "flowbite_sidebar",
+      "uri": "flowbite://components/sidebar"
+    },
+    {
+      "name": "flowbite_skeleton",
+      "uri": "flowbite://components/skeleton"
+    },
+    {
+      "name": "flowbite_speed_dial",
+      "uri": "flowbite://components/speed-dial"
+    },
+    {
+      "name": "flowbite_spinner",
+      "uri": "flowbite://components/spinner"
+    },
+    {
+      "name": "flowbite_stepper",
+      "uri": "flowbite://components/stepper"
+    },
+    {
+      "name": "flowbite_tables",
+      "uri": "flowbite://components/tables"
+    },
+    {
+      "name": "flowbite_tabs",
+      "uri": "flowbite://components/tabs"
+    },
+    {
+      "name": "flowbite_timeline",
+      "uri": "flowbite://components/timeline"
+    },
+    {
+      "name": "flowbite_toast",
+      "uri": "flowbite://components/toast"
+    },
+    {
+      "name": "flowbite_tooltips",
+      "uri": "flowbite://components/tooltips"
+    },
+    {
+      "name": "flowbite_typography",
+      "uri": "flowbite://components/typography"
+    },
+    {
+      "name": "flowbite_video",
+      "uri": "flowbite://components/video"
+    },
+    {
+      "name": "flowbite_checkbox",
+      "uri": "flowbite://forms/checkbox"
+    },
+    {
+      "name": "flowbite_file_input",
+      "uri": "flowbite://forms/file-input"
+    },
+    {
+      "name": "flowbite_floating_label",
+      "uri": "flowbite://forms/floating-label"
+    },
+    {
+      "name": "flowbite_input_field",
+      "uri": "flowbite://forms/input-field"
+    },
+    {
+      "name": "flowbite_number_input",
+      "uri": "flowbite://forms/number-input"
+    },
+    {
+      "name": "flowbite_phone_input",
+      "uri": "flowbite://forms/phone-input"
+    },
+    {
+      "name": "flowbite_radio",
+      "uri": "flowbite://forms/radio"
+    },
+    {
+      "name": "flowbite_range_input",
+      "uri": "flowbite://forms/range-input"
+    },
+    {
+      "name": "flowbite_search_input",
+      "uri": "flowbite://forms/search-input"
+    },
+    {
+      "name": "flowbite_select",
+      "uri": "flowbite://forms/select"
+    },
+    {
+      "name": "flowbite_textarea",
+      "uri": "flowbite://forms/textarea"
+    },
+    {
+      "name": "flowbite_timepicker",
+      "uri": "flowbite://forms/timepicker"
+    },
+    {
+      "name": "flowbite_toggle",
+      "uri": "flowbite://forms/toggle"
+    },
+    {
+      "name": "flowbite_charts",
+      "uri": "flowbite://plugins/charts"
+    },
+    {
+      "name": "flowbite_datatables",
+      "uri": "flowbite://plugins/datatables"
+    },
+    {
+      "name": "flowbite_wysiwyg",
+      "uri": "flowbite://plugins/wysiwyg"
+    },
+    {
+      "name": "flowbite_blockquote",
+      "uri": "flowbite://typography/blockquote"
+    },
+    {
+      "name": "flowbite_headings",
+      "uri": "flowbite://typography/headings"
+    },
+    {
+      "name": "flowbite_hr",
+      "uri": "flowbite://typography/hr"
+    },
+    {
+      "name": "flowbite_images",
+      "uri": "flowbite://typography/images"
+    },
+    {
+      "name": "flowbite_links",
+      "uri": "flowbite://typography/links"
+    },
+    {
+      "name": "flowbite_lists",
+      "uri": "flowbite://typography/lists"
+    },
+    {
+      "name": "flowbite_paragraphs",
+      "uri": "flowbite://typography/paragraphs"
+    },
+    {
+      "name": "flowbite_text",
+      "uri": "flowbite://typography/text"
+    }
+  ]
+}

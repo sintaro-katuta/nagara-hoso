@@ -1,0 +1,25 @@
+{
+  "name": "yorimichi-radio",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "start": "node server.mjs",
+    "test": "node --test",
+    "demo": "node scripts/create-demo.mjs",
+    "ingest": "node scripts/ingest.mjs",
+    "build": "tailwindcss -i src/styles.css -o public/styles.css --minify",
+    "dev:css": "tailwindcss -i src/styles.css -o public/styles.css --watch"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "devDependencies": {
+    "@modelcontextprotocol/sdk": "1.32.1",
+    "@tailwindcss/cli": "4.3.0",
+    "daisyui": "5.7.50",
+    "flowbite": "4.0.2",
+    "flowbite-mcp": "1.1.5",
+    "tailwindcss": "4.3.0"
+  }
+}
