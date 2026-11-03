@@ -9,7 +9,7 @@
 別ターミナルで：
 
 ```sh
-cd /Users/sintaro.katuta/dev/nagara-hoso
+cd /Users/sintaro.katuta/dev/nagara-broadcast
 npm run radio:generate -- examples/yorimichi-ep01.json --program --output output/yorimichi-ep01.mp3
 ```
 

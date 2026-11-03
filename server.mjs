@@ -73,10 +73,10 @@ export async function createApp({dataDir=path.join(root,'data')}={}) {
         const items=episodes.map(e=>`<item><title>${xml(e.title)}</title><description>${xml(e.description)}</description><guid isPermaLink="false">${xml(e.id)}</guid><pubDate>${new Date(e.date).toUTCString()}</pubDate><enclosure url="${xml(base+e.audio)}" length="${e.size}" type="audio/mpeg"/></item>`).join('');
         res.writeHead(200,{'Content-Type':'application/rss+xml; charset=utf-8'});return res.end(`<?xml version="1.0" encoding="UTF-8"?><rss version="2.0"><channel><title>ながら放送</title><link>${base}</link><description>いつもの時間に、気ままな声を。</description><language>ja</language>${items}</channel></rss>`);
       }
-      const files={'/':'index.html','/app.js':'app.js','/player-model.js':'player-model.js','/flowbite.js':'flowbite.js','/styles.css':'styles.css','/favicon.svg':'favicon.svg'};
+      const files={'/':'index.html','/app.js':'app.js','/programs.js':'programs.js','/player-model.js':'player-model.js','/flowbite.js':'flowbite.js','/styles.css':'styles.css','/favicon.svg':'favicon.svg',...Object.fromEntries(['monday','tuesday','wednesday','thursday','friday','saturday','sunday'].map(day=>[`/programs/${day}.png`,`programs/${day}.png`]))};
       if(['GET','HEAD'].includes(req.method) && files[url.pathname]) {
         const body=await readFile(path.join(root,'public',files[url.pathname]));
-        const type={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.svg':'image/svg+xml'}[path.extname(files[url.pathname])];
+        const type={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.svg':'image/svg+xml','.png':'image/png'}[path.extname(files[url.pathname])];
         res.writeHead(200,{'Content-Type':type,'Cache-Control':'no-cache'});return res.end(req.method==='HEAD'?undefined:body);
       }
       json(404,{error:'見つかりません。'});

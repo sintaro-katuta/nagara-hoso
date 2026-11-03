@@ -1,4 +1,4 @@
 [mcp_servers.flowbite]
 command = "/opt/homebrew/bin/node"
-args = ["/Users/sintaro.katuta/dev/nagara-hoso/node_modules/flowbite-mcp/build/index.js", "--mode", "stdio"]
+args = ["/Users/sintaro.katuta/dev/nagara-broadcast/node_modules/flowbite-mcp/build/index.js", "--mode", "stdio"]
 startup_timeout_sec = 20

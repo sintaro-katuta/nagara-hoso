@@ -1,0 +1,17 @@
+name = "nagara-broadcast"
+main = "worker.mjs"
+compatibility_date = "2026-10-20"
+
+[assets]
+directory = "./public"
+binding = "ASSETS"
+run_worker_first = ["/api/*", "/audio/*", "/feed.xml"]
+
+[[r2_buckets]]
+binding = "AUDIO"
+bucket_name = "yorimichi-radio-audio"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "yorimichi-radio-db"
+database_id = "27cb398e-0c26-4740-804d-f6bd49f75764"

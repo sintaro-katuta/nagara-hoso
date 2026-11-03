@@ -3,7 +3,7 @@
 Slackのスレッドを探さず、朝の音声を開いてすぐ聴くためのローカルプロトタイプ。Node.js 22以上で動作し、実行時に外部サービスのアカウントやAPIキーは不要です。UIは指定のNotionデザインシステムを基に、FlowbiteとTailwind CSSで実装しています。
 
 ```sh
-cd /Users/sintaro.katuta/dev/nagara-hoso
+cd /Users/sintaro.katuta/dev/nagara-broadcast
 npm start
 ```
 
@@ -11,7 +11,7 @@ http://127.0.0.1:4317 を開きます。停止は起動したターミナルで 
 
 ## 週間番組の企画
 
-[週間番組と制作方針](docs/weekly-program-plan.md)に、曜日ごとの番組、金曜のお金の話と日曜の振り返りの区別、レビュー待ちを挟まない自動制作、聴いた後のフィードバックの反映方針をまとめています。[人物像と音声モデルの候補](docs/personality-and-voice-candidates.md)には、架空の出演者とAivisSpeechの声の配役案があります。人物設定と配役は検討中で、週間スケジュールはまだ実装していません。
+[週間番組と制作方針](docs/weekly-program-plan.md)に、曜日ごとの番組と制作方針をまとめています。現在の配役と自動制作の運用は [週間自動制作・公開](docs/delivery/weekly-cloud/operations.md) を参照してください。
 
 ## デザインとFlowbite MCP
 
@@ -65,7 +65,7 @@ npm run mcp:context
 別ターミナルで生成します。
 
 ```sh
-cd /Users/sintaro.katuta/dev/nagara-hoso
+cd /Users/sintaro.katuta/dev/nagara-broadcast
 npm run radio:generate -- examples/yorimichi-ep01.json --program --output output/yorimichi-ep01.mp3
 ```
 
@@ -73,7 +73,7 @@ npm run radio:generate -- examples/yorimichi-ep01.json --program --output output
 
 `--ingest` を付けると完成した音声を起動中のサイトへ追加します。既存ファイルは上書きしないため、再生成時は別の出力名を指定してください。台本JSONの `voices` に話者UUID・名前・スタイル名、`turns` に `speaker`・`text`・任意の `pauseMs` を並べます。スタイルIDは `/speakers` から実際に取得し、`/audio_query` → `/synthesis` でWAVを生成します。指定した2人のモデルが不足していたり同じ話者だったりする場合は停止します。短い会話だけを作る場合は、以前の `examples/morning-conversation.json` と `--program` なしの生成方法も利用できます。
 
-本体・モデルの配布元、利用条件、起動や復旧の手順は [AivisSpeech運用メモ](docs/delivery/aivis/operations.md) にまとめています。合成はPC内のHTTP APIだけを使用します。自動記事取得や毎朝のジョブは未接続です。
+本体・モデルの配布元、利用条件、起動や復旧の手順は [AivisSpeech運用メモ](docs/delivery/aivis/operations.md) にまとめています。合成はPC内のHTTP APIだけを使用します。自動記事取得は未接続です。
 
 最新の完成番組「茂とまおのよりみちラジオ #01｜小さな遠回り」は5分9秒・3.72 MB。[MP3](output/yorimichi-ep01.mp3)、[時刻付き台本](docs/delivery/radio-program/script.md)、サイトの最新エピソードから確認できます。[番組制作の検証結果](docs/delivery/radio-program/verification.md)
 
@@ -86,7 +86,7 @@ npm run radio:generate -- examples/yorimichi-ep01.json --program --output output
 既存のローカルTTSがMP3を書き出したあと、次のコマンドを実行すれば、Slackへ送る代わりにサイトへ追加できます。サーバーを起動してから実行してください。
 
 ```sh
-cd /Users/sintaro.katuta/dev/nagara-hoso
+cd /Users/sintaro.katuta/dev/nagara-broadcast
 npm run ingest -- /absolute/path/to/radio.mp3 tech "今日の技術ラジオ" "今日の話題と出典の説明"
 ```
 
@@ -103,7 +103,7 @@ curl --fail-with-body -X POST \
 
 任意の `description`、`source`（http/httpsの出典URL）もクエリに指定できます。成功時は201とエピソードJSONを返します。同じMP3をもう一度送ると別エピソードとして追加します。
 
-朝7時の自動生成・記事の取得・重複話題の排除・既存Dot等の設定変更はこのプロトタイプでは実行していません。既存のジョブ末尾に上記コマンドを組み込む想定です。cron等の新規登録もしていません。
+朝の自動制作と公開の手順は [運用メモ](docs/delivery/weekly-cloud/operations.md) を参照してください。記事の自動取得は実装していません。
 
 ## データと復旧
 
@@ -120,7 +120,7 @@ curl --fail-with-body -X POST \
 
 この版は127.0.0.1のみで待ち受けます。Cloudflareへのアップロード・デプロイは行っていません。画面はそのまま静的配信に利用できますが、NodeサーバーをPagesに置くだけでは追加APIは動きません。
 
-構成案：**Pages（画面） + R2 Standard（MP3） + Workers（一覧・追加APIとRange配信） + D1（番組情報）**。公開版ではアップロードAPIを認証し、RSSと音声URLをHTTPSの公開URLへ差し替えます。ローカルRSSはこのMac以外のスマートフォンや外部のPodcastサービスから到達できません。Podcastサービスへの登録は未検証です。
+公開版は **Workers 静的アセット（画面） + R2 Standard（MP3） + Workers（一覧・追加APIとRange配信） + D1（番組情報）**。アップロードAPIは認証し、公開 RSS と音声URLは HTTPS で提供します。Podcastサービスへの登録は未検証です。
 
 2026-10-21確認時点のR2 Standardは月10 GB-month、Class A 100万回、Class B 1,000万回が無料枠。インターネットへの転送料は無料です。無料枠超過は有料で、容量だけでなく操作回数も対象です。
 

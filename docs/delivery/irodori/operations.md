@@ -9,7 +9,7 @@
 専用環境は `/Users/sintaro.katuta/dev/irodori-tts`。Python 3.11.17、PyTorch 2.10.0、公式uv.lockの依存を `uv sync --extra cpu --python 3.11` で導入した。macOSのcpu extraは標準PyTorchを入れるため、MPSも選択できる。標準のPython環境やラジオサイトのnpm依存は変更しない。
 
 ```sh
-cd /Users/sintaro.katuta/dev/nagara-hoso
+cd /Users/sintaro.katuta/dev/nagara-broadcast
 ../irodori-tts/.venv/bin/python scripts/try-irodori.py \
   examples/irodori-conversation.json \
   --output output/irodori-conversation.mp3

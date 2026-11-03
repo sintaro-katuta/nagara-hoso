@@ -1,0 +1,18 @@
+import {cp,mkdir,readFile,writeFile} from 'node:fs/promises';
+import path from 'node:path';
+import {fileURLToPath} from 'node:url';
+const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
+const dest=path.join(root,'cloudflare','public');
+await mkdir(dest,{recursive:true});
+await cp(path.join(root,'public'),dest,{recursive:true});
+const htmlFile=path.join(dest,'index.html');
+let html=await readFile(htmlFile,'utf8');
+html=html.replace('<html lang="ja">','<html lang="ja" class="cloud-public">');
+await writeFile(htmlFile,html);
+await writeFile(path.join(dest,'cloud.css'),'.cloud-public #open-upload,.cloud-public [data-view="storage"],.cloud-public .library-note,.cloud-public .storage-card,.cloud-public [data-action="add-audio"]{display:none!important}\n');
+html=html.replace('</head>','<link rel="stylesheet" href="/cloud.css"></head>');
+await writeFile(htmlFile,html);
+const appFile=path.join(dest,'app.js');
+let app=await readFile(appFile,'utf8');
+app=app.replace('MP3ファイルを追加すると、ここから聴けます。','新しいエピソードをお待ちください。');
+await writeFile(appFile,app);

@@ -1,3 +1,4 @@
+import {programs,episodeProgram,episodeTitle} from '/programs.js';
 import {buildQueue,nextIds} from '/player-model.js';
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -38,11 +39,13 @@ function applyTheme(){const value=$('theme-select').value;const dark=value==='da
 $('theme-select').onchange=()=>{write('yr:appearance',$('theme-select').value);applyTheme();};systemTheme.addEventListener('change',applyTheme);applyTheme();
 let saved=read('yr:saved',[]),history=read('yr:history',[]),positions=read('yr:positions',{});
 if(!Array.isArray(saved))saved=[];if(!Array.isArray(history))history=[];if(!positions||typeof positions!=='object')positions={};
-let episodes=[],channels=[],view='home',filter='all',query='',current=null,queue=[],featured=null,selectedFile=null;
+let episodes=[],channels=[],view='home',filter='all',programFilter=null,query='',current=null,queue=[],featured=null,selectedFile=null;
 let switching=false,lastPositionWrite=0,toastTimer,automaticTitle='';
 const audio=$('audio');audio.volume=.8;
 const channel=id=>channels.find(c=>c.id===id);
 const english={tech:'TECH',life:'LIFE',comedy:'OFFBEAT',news:'WORLD'};
+const episodeArt=e=>{const p=episodeProgram(e);return p?`<img src="/programs/${p.image}.png" alt="" loading="lazy">`:art(e.channel);};
+const relativeDate=value=>{const elapsed=Date.now()-new Date(value).getTime();if(!Number.isFinite(elapsed)||elapsed<0)return '';const minutes=Math.floor(elapsed/60000);if(minutes<1)return 'たった今';if(minutes<60)return `${minutes}分前`;const hours=Math.floor(minutes/60);if(hours<24)return `${hours}時間前`;const days=Math.floor(hours/24);if(days<7)return `${days}日前`;return new Date(value).toLocaleDateString('ja-JP');};
 const time=s=>{if(!Number.isFinite(Number(s)))return '0:00';s=Math.max(0,Math.floor(Number(s)));return `${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`;};
 const bytes=n=>n>=1e9?`${(n/1e9).toFixed(2)} GB`:n>=1e6?`${(n/1e6).toFixed(1)} MB`:`${(n/1000).toFixed(0)} KB`;
 function toast(message){$('toast').textContent=message;$('toast').classList.add('visible');clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('toast').classList.remove('visible'),3400);}
@@ -52,17 +55,17 @@ async function load(){
  const data=await r.json();episodes=data.episodes;channels=data.channels;
  const ordered=[...episodes].sort((a,b)=>new Date(b.date)-new Date(a.date));
  featured=ordered.find(e=>!e.demo)||ordered[0]||null;
- $('channel-cards').innerHTML=channels.map(c=>`<button class="channel-tile ${c.id}" data-channel="${c.id}" aria-label="${esc(c.name)}のエピソードを見る"><div class="channel-art"><span>${english[c.id]}</span>${art(c.id)}</div><div class="channel-text"><div><h3>${esc(c.name)}</h3><p>${episodes.filter(e=>e.channel===c.id).length}エピソード</p></div><span aria-hidden="true">↗</span></div></button>`).join('');
+ $('channel-cards').innerHTML=[1,2,3,4,5,6,0].map((index,day)=>{const p=programs[index];return `<button class="channel-tile program-tile" data-program="${index}" data-day="${p.image}" aria-label="${esc(p.name)}のエピソードを見る"><span class="program-day">${['月','火','水','木','金','土','日'][day]}曜日</span><span class="program-art"><img src="/programs/${p.image}.png" alt="" loading="lazy"></span></button>`;}).join('');
  $('filters').innerHTML=`<button class="filter-tab" data-filter="all">すべて</button>`+channels.map(c=>`<button class="filter-tab" data-filter="${c.id}">${esc(c.name)}</button>`).join('');
  $('upload-channel').innerHTML=channels.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join('');
  $('actual-storage').textContent=bytes(data.storageBytes);$('rail-storage').textContent=bytes(data.storageBytes);
  $('storage-detail').textContent=`${episodes.length}本の音声を保存しています`;
- document.querySelector('.feature-card').hidden=!featured;$('hero-play').disabled=!featured;$('feature-save').disabled=!featured;$('start-listening').disabled=!featured;
- if(featured){const c=channel(featured.channel);$('feature-title').textContent=featured.title;$('feature-category').textContent=c.name;$('feature-description').textContent=featured.description||c.description;$('feature-meta').textContent=`${new Date(featured.date).toLocaleDateString('ja-JP')}　/　${time(featured.duration)}`;$('feature-demo').hidden=!featured.demo;$('feature-art-channel').textContent=c.name;$('feature-art-duration').textContent='▶ '+time(featured.duration);}
+ document.querySelector('.feature-card').hidden=!featured;$('main').classList.toggle('has-feature',!!featured);$('hero-play').disabled=!featured;$('feature-save').disabled=!featured;$('start-listening').disabled=!featured;
+ if(featured){const c=channel(featured.channel);$('feature-title').textContent=episodeTitle(featured);const program=episodeProgram(featured);$('feature-category').textContent=program?program.name+'　・　'+program.cast:c.name;const cover=document.querySelector('.feature-art');cover.classList.toggle('has-program-art',!!program);let coverImage=cover.querySelector('.feature-program-image');if(program){if(!coverImage){coverImage=document.createElement('img');coverImage.className='feature-program-image';coverImage.alt='';cover.prepend(coverImage);}coverImage.src=`/programs/${program.image}.png`;}else if(coverImage)coverImage.remove();$('feature-description').textContent=featured.description||c.description;$('feature-meta').textContent=relativeDate(featured.date);$('feature-demo').hidden=!featured.demo;$('feature-art-channel').textContent=c.name;$('feature-art-duration').textContent='▶ '+time(featured.duration);}
  render();calculate();
 }
 function list(){
- let result=episodes.filter(e=>filter==='all'||e.channel===filter);
+ let result=episodes.filter(e=>(filter==='all'||e.channel===filter)&&(programFilter===null||episodeProgram(e)===programs[programFilter]));
  if(view==='saved')result=result.filter(e=>saved.includes(e.id));
  if(view==='history')result=result.filter(e=>history.includes(e.id));
  if(query)result=result.filter(e=>(e.title+' '+e.description+' '+channel(e.channel)?.name).toLowerCase().includes(query.toLowerCase()));
@@ -77,12 +80,12 @@ function render(){
  const focusKey=listFocus?.hasAttribute('data-save')?'save':'play';
  const focusId=listFocus?.dataset[focusKey];
  const focusIndex=listFocus?[...$('episode-list').querySelectorAll('.episode-row')].indexOf(listFocus.closest('.episode-row')):-1;
- const isHome=view==='home'&&filter==='all'&&!query&&episodes.length>0;
+ const isHome=view==='home'&&filter==='all'&&programFilter===null&&!query;
  $('home-content').hidden=!isHome;$('browse-layout').hidden=view==='storage';$('storage-section').hidden=view!=='storage';
  $('main').classList.toggle('is-home',isHome);
- $('page-title').textContent=view==='storage'?'保存容量':view==='saved'?'あとで聴く':view==='history'?'再生履歴':filter!=='all'?channel(filter)?.name:query?'エピソードを検索':isHome?'いつもの毎日に、\nながら放送。':'エピソードを見つける';
- $('page-description').textContent=view==='storage'?'保存している音声と、今後の容量の目安を確認できます。':view==='saved'?'しおりを押して追加したエピソードです。':view==='history'?'前回の続きから聴けます。':filter!=='all'?channel(filter)?.description:isHome?'まだ知らない話に、耳をすませよう。\n技術から日常まで、気ままに聴けるラジオ。':'気になるエピソードを選んで、聴いてみよう。';
- $('list-title').textContent=view==='saved'?'あとで聴くエピソード':view==='history'?'最近聴いたエピソード':query?`「${query}」の検索結果`:filter!=='all'?channel(filter)?.name+'のエピソード':'エピソードを見つける';
+ $('page-title').textContent=view==='storage'?'保存容量':view==='saved'?'あとで聴く':view==='history'?'再生履歴':programFilter!==null?programs[programFilter].name:filter!=='all'?channel(filter)?.name:query?'エピソードを検索':isHome?'いつもの毎日に、\nながら放送。':'エピソードを見つける';
+ $('page-description').textContent=view==='storage'?'保存している音声と、今後の容量の目安を確認できます。':view==='saved'?'しおりを押して追加したエピソードです。':view==='history'?'前回の続きから聴けます。':programFilter!==null?'出演：'+programs[programFilter].cast:filter!=='all'?channel(filter)?.description:isHome?'まだ知らない話に、耳をすませよう。\n技術から日常まで、気ままに聴けるラジオ。':'気になるエピソードを選んで、聴いてみよう。';
+ $('list-title').textContent=view==='saved'?'あとで聴くエピソード':view==='history'?'最近聴いたエピソード':query?`「${query}」の検索結果`:programFilter!==null?programs[programFilter].name+'のエピソード':filter!=='all'?channel(filter)?.name+'のエピソード':'エピソードを見つける';
  document.querySelectorAll('[data-view]').forEach(el=>{const active=el.dataset.view===view;el.classList.toggle('active',active);if(active)el.setAttribute('aria-current','page');else el.removeAttribute('aria-current');});
  document.querySelectorAll('[data-filter]').forEach(el=>{const active=el.dataset.filter===filter;el.classList.toggle('active',active);el.setAttribute('aria-pressed',String(active));});
  $('saved-count').textContent=saved.filter(id=>episodes.some(e=>e.id===id)).length;
@@ -92,16 +95,16 @@ function render(){
  $('sort').title=view==='history'?'最近聴いた順に表示しています':'並び順';
  $('episode-list').innerHTML=visible.length?visible.map(e=>{
   const c=channel(e.channel),active=current?.id===e.id;
-  return `<article class="episode-row ${c.id} ${active?'current':''}"><div class="episode-cover">${art(c.id)}</div><div class="episode-body"><div class="episode-meta"><span class="channel-name">${esc(c.name)}</span><span>${new Date(e.date).toLocaleDateString('ja-JP',{month:'2-digit',day:'2-digit'})}</span><span class="episode-duration-inline">${time(e.duration)}</span>${e.demo?'<span class="sample-label">試聴サンプル</span>':''}${e.source?`<a class="source-link" href="${esc(e.source)}" target="_blank" rel="noreferrer">出典 ↗</a>`:''}</div><button class="episode-title" data-play="${e.id}">${esc(e.title)}</button><p class="episode-description">${esc(e.description)}</p></div><div class="episode-actions"><span class="episode-duration">${time(e.duration)}</span><a class="icon-button download-action" href="${e.audio}" download="${esc(e.title)}.mp3" aria-label="${esc(e.title)}をダウンロード">${icon('download')}</a><button class="icon-button ${saved.includes(e.id)?'saved':''}" data-save="${e.id}" aria-label="${esc(e.title)}を${saved.includes(e.id)?'あとで聴くから外す':'あとで聴くに追加'}" aria-pressed="${saved.includes(e.id)}">${icon(saved.includes(e.id)?'bookmarkFill':'bookmark')}</button><button class="episode-play" data-play="${e.id}" aria-label="${esc(e.title)}を${active&&!audio.paused?'一時停止':'再生'}">${icon(active&&!audio.paused?'pause':'play')}</button></div></article>`;
+  return `<article class="episode-row ${c.id} ${active?'current':''}"><div class="episode-cover">${episodeArt(e)}</div><div class="episode-body"><div class="episode-meta"><span class="channel-name">${esc(c.name)}</span><span>${new Date(e.date).toLocaleDateString('ja-JP',{month:'2-digit',day:'2-digit'})}</span><span class="episode-duration-inline">${time(e.duration)}</span>${e.demo?'<span class="sample-label">試聴サンプル</span>':''}${e.source?`<a class="source-link" href="${esc(e.source)}" target="_blank" rel="noreferrer">出典 ↗</a>`:''}</div><button class="episode-title" data-play="${e.id}">${esc(episodeTitle(e))}</button>${episodeProgram(e)?`<p class="episode-cast">出演：${esc(episodeProgram(e).cast)}</p>`:''}<p class="episode-description">${esc(e.description)}</p></div><div class="episode-actions"><span class="episode-duration">${time(e.duration)}</span><a class="icon-button download-action" href="${e.audio}" download="${esc(e.title)}.mp3" aria-label="${esc(e.title)}をダウンロード">${icon('download')}</a><button class="icon-button ${saved.includes(e.id)?'saved':''}" data-save="${e.id}" aria-label="${esc(e.title)}を${saved.includes(e.id)?'あとで聴くから外す':'あとで聴くに追加'}" aria-pressed="${saved.includes(e.id)}">${icon(saved.includes(e.id)?'bookmarkFill':'bookmark')}</button><button class="episode-play" data-play="${e.id}" aria-label="${esc(e.title)}を${active&&!audio.paused?'一時停止':'再生'}">${icon(active&&!audio.paused?'pause':'play')}</button></div></article>`;
  }).join(''):emptyState();
  if(listFocus){const replacement=$('episode-list').querySelector(`[data-${focusKey}="${CSS.escape(focusId)}"]`)||$('episode-list').querySelectorAll('.episode-row')[Math.max(0,Math.min(focusIndex,visible.length-1))]?.querySelector(`[data-${focusKey}]`)||$('episode-list').querySelector('button');replacement?.focus({preventScroll:true});}
- if(featured){const active=current?.id===featured.id&&!audio.paused;$('hero-play').querySelector('[data-icon]').innerHTML=icon(active?'pause':'play');$('start-listening').querySelector('[data-icon]').innerHTML=icon(active?'pause':'play');$('start-listening-label').textContent=active?'一時停止':'最新のエピソードを聴く';$('feature-action-label').textContent=active?'一時停止':'エピソードを聴く';$('feature-save').innerHTML=icon(saved.includes(featured.id)?'bookmarkFill':'bookmark');$('feature-save').setAttribute('aria-pressed',String(saved.includes(featured.id)));$('feature-save').setAttribute('aria-label',`最新エピソードを${saved.includes(featured.id)?'あとで聴くから外す':'あとで聴くに追加'}`);}
+ if(featured){const active=current?.id===featured.id&&!audio.paused;$('hero-play').querySelector('[data-icon]').innerHTML=icon(active?'pause':'play');$('start-listening').querySelector('[data-icon]').innerHTML=icon(active?'pause':'play');$('start-listening-label').textContent=active?'一時停止':'最新のエピソードを聴く';$('feature-action-label').textContent=active?'一時停止':`聴いてみる${featured.duration?`（${Math.floor(featured.duration/60)}分${String(Math.floor(featured.duration%60)).padStart(2,'0')}秒）`:''}`;$('feature-save').innerHTML=icon(saved.includes(featured.id)?'bookmarkFill':'bookmark')+`<span>${saved.includes(featured.id)?'保存済み':'あとで聴く'}</span>`;$('feature-save').setAttribute('aria-pressed',String(saved.includes(featured.id)));$('feature-save').setAttribute('aria-label',`最新エピソードを${saved.includes(featured.id)?'あとで聴くから外す':'あとで聴くに追加'}`);}
  renderQueue();updatePlayer();
 }
 function emptyState(){
- const filtered=query||filter!=='all';
+ const filtered=query||filter!=='all'||programFilter!==null;
  const title=filtered?'条件に合うエピソードがありません':view==='saved'?'あとで聴くエピソードはありません':view==='history'?'まだ再生履歴がありません':'エピソードはまだありません';
- const description=filtered?'検索の言葉やチャンネルを変えてみてください。':view==='saved'?'エピソードのしおりを押すと、ここに追加できます。':view==='history'?'エピソードを再生すると、ここに表示されます。':'MP3ファイルを追加すると、ここから聴けます。';
+ const description=programFilter!==null?'この番組のエピソードをお待ちください。':filtered?'検索の言葉やチャンネルを変えてみてください。':view==='saved'?'エピソードのしおりを押すと、ここに追加できます。':view==='history'?'エピソードを再生すると、ここに表示されます。':'MP3ファイルを追加すると、ここから聴けます。';
  const action=filtered?'clear-filters':view==='saved'||view==='history'?'browse':'add-audio';
  const label=filtered?'検索・絞り込みを解除':action==='browse'?'エピソードを探す':'音声を追加';
  return `<div class="empty-state"><b>${title}</b><p>${description}</p><button class="text-action" data-action="${action}">${label} <span aria-hidden="true">→</span></button></div>`;
@@ -110,7 +113,7 @@ function renderQueue(){
  const ids=current?nextIds(queue,current.id):list().map(e=>e.id);
  const upcoming=ids.map(id=>episodes.find(e=>e.id===id)).filter(Boolean);
  $('queue-description').textContent=current?`このあとの再生予定：${upcoming.length}本`:'選んだエピソードから順番に再生します。';
- $('queue-list').innerHTML=upcoming.slice(0,3).map(e=>`<button class="queue-item ${e.channel}" data-play="${e.id}" data-from-queue="true" aria-label="再生：${esc(e.title)}"><span class="queue-cover">${art(e.channel)}</span><span><b>${esc(e.title)}</b><small>${esc(channel(e.channel)?.name)} · ${time(e.duration)}</small></span><span class="queue-play">${icon('play')}</span></button>`).join('')||`<p class="queue-empty">${current?'次のエピソードはありません。':'エピソードを選ぶと、ここに表示されます。'}</p>`;
+ $('queue-list').innerHTML=upcoming.slice(0,3).map(e=>`<button class="queue-item ${e.channel}" data-play="${e.id}" data-from-queue="true" aria-label="再生：${esc(e.title)}"><span class="queue-cover">${episodeArt(e)}</span><span><b>${esc(episodeTitle(e))}</b><small>${esc(channel(e.channel)?.name)} · ${time(e.duration)}</small></span><span class="queue-play">${icon('play')}</span></button>`).join('')||`<p class="queue-empty">${current?'次のエピソードはありません。':'エピソードを選ぶと、ここに表示されます。'}</p>`;
 }
 function save(id){const removing=saved.includes(id);saved=removing?saved.filter(x=>x!==id):[...saved,id];write('yr:saved',saved);render();toast(removing?'あとで聴くから外しました。':'あとで聴くに追加しました。');}
 function updatePlayer(){
@@ -118,8 +121,8 @@ function updatePlayer(){
  for(const id of ['back15','forward15','seek'])$(id).disabled=!ready;
  $('next').disabled=!current||nextIds(queue,current.id).length===0;
  if(!current){$('player-art').innerHTML=art('tech');return;}
- const c=channel(current.channel);$('player-art').className='player-cover '+c.id;$('player-art').innerHTML=art(c.id);
- $('player-title').textContent=current.title;$('player-channel').textContent=c.name+(current.demo?' · 試聴サンプル':'');
+ const c=channel(current.channel);$('player-art').className='player-cover '+c.id;$('player-art').innerHTML=episodeArt(current);
+ $('player-title').textContent=episodeTitle(current);const program=episodeProgram(current);$('player-channel').textContent=program?program.name+' · '+program.cast:c.name+(current.demo?' · 試聴サンプル':'');
  $('player-save').disabled=false;$('toggle-play').disabled=false;
  $('player-save').innerHTML=icon(saved.includes(current.id)?'bookmarkFill':'bookmark');$('player-save').classList.toggle('saved',saved.includes(current.id));$('player-save').setAttribute('aria-pressed',String(saved.includes(current.id)));
  $('player-save').setAttribute('aria-label',`再生中のエピソードを${saved.includes(current.id)?'あとで聴くから外す':'あとで聴くに追加'}`);
@@ -151,11 +154,12 @@ $('toggle-play').onclick=()=>{if(current)play(current.id);};$('player-save').onc
 $('back15').onclick=()=>{if(Number.isFinite(audio.duration))audio.currentTime=Math.max(0,audio.currentTime-15);};$('forward15').onclick=()=>{if(Number.isFinite(audio.duration))audio.currentTime=Math.min(audio.duration,audio.currentTime+15);};$('next').onclick=next;
 $('seek').oninput=e=>{if(Number.isFinite(audio.duration))audio.currentTime=audio.duration*Number(e.target.value)/100;};$('speed').onchange=e=>{audio.defaultPlaybackRate=Number(e.target.value);audio.playbackRate=Number(e.target.value);};$('volume').oninput=e=>audio.volume=Number(e.target.value);
 $('search').oninput=e=>{query=e.target.value.trim();render();};$('sort').onchange=render;
-document.addEventListener('click',e=>{const b=e.target.closest('[data-view],[data-channel],[data-filter],[data-play],[data-save],[data-action]');if(!b)return;
- if(b.dataset.action){if(b.dataset.action==='add-audio'){modal.show();return;}if(b.dataset.action==='retry'){load().catch(showLoadError);return;}if(b.dataset.action==='browse')view='home';filter='all';query='';$('search').value='';render();$('search').focus();}
- else if(b.dataset.view){view=b.dataset.view;filter='all';query='';$('search').value='';closeMenu();render();}
- else if(b.dataset.channel){filter=b.dataset.channel;view='home';query='';$('search').value='';render();$('episodes-section').scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth',block:'start'});}
- else if(b.dataset.filter){filter=b.dataset.filter;render();}
+document.addEventListener('click',e=>{const b=e.target.closest('[data-view],[data-channel],[data-program],[data-filter],[data-play],[data-save],[data-action]');if(!b)return;
+ if(b.dataset.action){programFilter=null;if(b.dataset.action==='add-audio'){modal.show();return;}if(b.dataset.action==='retry'){load().catch(showLoadError);return;}if(b.dataset.action==='browse')view='home';filter='all';query='';$('search').value='';render();$('search').focus();}
+ else if(b.dataset.view){programFilter=null;view=b.dataset.view;filter='all';query='';$('search').value='';closeMenu();render();}
+ else if(b.dataset.program!==undefined){programFilter=Number(b.dataset.program);filter='all';view='home';query='';$('search').value='';render();$('episodes-section').scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth',block:'start'});}
+ else if(b.dataset.channel){programFilter=null;filter=b.dataset.channel;view='home';query='';$('search').value='';render();$('episodes-section').scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth',block:'start'});}
+ else if(b.dataset.filter){programFilter=null;filter=b.dataset.filter;render();}
  else if(b.dataset.play)play(b.dataset.play,b.dataset.fromQueue!=='true');
  else if(b.dataset.save)save(b.dataset.save);
 });

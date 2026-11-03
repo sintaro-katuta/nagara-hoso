@@ -45,6 +45,13 @@ test('both configured identities are checked before synthesis begins',async()=>{
  assert.ok(calls[0].endsWith('/speakers'));
 });
 
+test('one-person programmes support arbitrary aliases and distinct configured speakers',()=>{
+ const solo={voices:{daichi:{name:'阿井田 茂',speaker_uuid:'shigeru-uuid',styleName:'ノーマル'}},turns:[{speaker:'daichi',text:'おはようございます。'},{speaker:'daichi',text:'今日もよろしく。'}]};
+ assert.equal(validateScript(solo),solo);
+ assert.equal(resolveVoices(solo.voices,speakers).daichi.styleId,90123456);
+ assert.throws(()=>validateScript({...solo,turns:[{speaker:'other',text:'こんにちは。'},{speaker:'daichi',text:'はい。'}]}),/voices/);
+});
+
 test('dialogue uses two local IDs, preserves the query, and sets only speedScale to 0.95',async()=>{
  const calls=[],turns=[];
  const query={speedScale:1,pitchScale:0.05,intonationScale:1.2,kana:'おはようございます。',prePhonemeLength:0.1,postPhonemeLength:0.1,outputSamplingRate:44100,outputStereo:false};

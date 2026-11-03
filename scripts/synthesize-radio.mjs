@@ -105,7 +105,7 @@ export async function main(args=process.argv.slice(2)){
   await mkdir(path.dirname(output),{recursive:true});
   await copyFile(encoded,output,constants.COPYFILE_EXCL);
   console.log(`MP3を作成しました: ${output}`);
-  console.log(`声: ${voices.shigeru.name} / ${voices.mao.name}、話速: ${SPEAKING_RATE}`);
+  console.log(`声: ${Object.values(voices).map(voice=>voice.name).join(' / ')}、話速: ${SPEAKING_RATE}`);
  }finally{await rm(work,{recursive:true,force:true});}
  if(options.ingest){
   try{const result=await run(process.execPath,[fileURLToPath(new URL('./ingest.mjs',import.meta.url)),output,script.channel,script.title,script.description||''],{env:{...process.env,RADIO_URL:radioUrl}});console.log(result.stdout.trim());}

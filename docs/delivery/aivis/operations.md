@@ -9,7 +9,7 @@
 初回は共通のBERTモデルをダウンロードする。通常はその後このMacだけで合成できる。停止は起動ターミナルでCtrl+C。GUIと付属Engineを同じポートで二重起動しない。
 
 ```sh
-cd /Users/sintaro.katuta/dev/nagara-hoso
+cd /Users/sintaro.katuta/dev/nagara-broadcast
 npm run radio:generate -- examples/morning-conversation.json --output output/morning-conversation.mp3
 # サイトにも追加する場合（npm startを別ターミナルで実行）
 npm run radio:generate -- examples/morning-conversation.json --output output/morning-conversation-2.mp3 --ingest
